@@ -37,6 +37,10 @@ services:
       - DB_PORT=5432
       - DEBUG=${DEBUG}
       - SECRET_KEY=${SECRET_KEY}
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres
+      - DJANGO_SUPERUSER_USERNAME=Sond
+      - DJANGO_SUPERUSER_EMAIL=joaovictorbrtor2@gmail.com
+      - DJANGO_SUPERUSER_PASSWORD=admin123
     command: [ "/app/.docker/backend/wait-for-it.sh" ]
 
   frontend:

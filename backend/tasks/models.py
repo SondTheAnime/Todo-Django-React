@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 
 # Create your models here.
 
@@ -16,8 +17,14 @@ class Task(models.Model):
         (3, "Alta"),
     ]
 
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        verbose_name="Usuário",
+        related_name="tasks",
+    )
     title = models.CharField("Título", max_length=200)
-    description = models.TextField("Descrição")
+    description = models.TextField("Descrição", blank=True)
     status = models.CharField(
         "Status", max_length=20, choices=STATUS_CHOICES, default="pending"
     )

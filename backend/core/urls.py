@@ -19,11 +19,18 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from tasks.views import TaskViewSet
+from categories.views import CategoryViewSet
+from accounts.views import login_view, logout_view, get_csrf_token
+from rest_framework_simplejwt.views import TokenRefreshView
 
 router = DefaultRouter()
-router.register(r"tasks", TaskViewSet)
+router.register(r"tasks", TaskViewSet, basename="task")
+router.register(r"categories", CategoryViewSet, basename="category")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
+    path("api/auth/", include("accounts.urls")),
+    path("api/csrf/", get_csrf_token),
+    path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
