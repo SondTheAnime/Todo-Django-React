@@ -23,28 +23,28 @@ export default function TaskForm() {
 
     return (
         <div className="container mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Nova Tarefa</h1>
-            <div className="bg-white rounded-lg shadow p-6">
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
+            <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Nova Tarefa</h1>
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Título
                         </label>
                         <input
                             type="text"
-                            className="input-field w-full"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             placeholder="Digite o título da tarefa"
                             required
                         />
                     </div>
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Descrição
                         </label>
                         <textarea
-                            className="input-field w-full"
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             rows={4}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
@@ -52,9 +52,14 @@ export default function TaskForm() {
                             required
                         />
                     </div>
-                    <button type="submit" className="btn-primary">
-                        Salvar
-                    </button>
+                    <div className="flex justify-end">
+                        <button
+                            type="submit"
+                            className="px-6 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg"
+                        >
+                            Salvar
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
