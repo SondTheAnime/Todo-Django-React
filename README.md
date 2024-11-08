@@ -2,6 +2,7 @@
 
 ## Sobre o Projeto
 Sistema web para gerenciamento de tarefas pessoais e profissionais, permitindo aos usuários organizar, priorizar e acompanhar suas atividades de forma eficiente.
+Projeto desenvolvido com intuito de aprender e mesclar as tecnologias abaixo, tanto no backend quanto no frontend, fazendo se comunicar entre si via consumo de uma API Rest.
 
 ## Tecnologias Utilizadas
 
