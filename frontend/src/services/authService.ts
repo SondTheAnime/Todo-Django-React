@@ -41,5 +41,24 @@ export const authService = {
         } catch (error) {
             return { isAuthenticated: false };
         }
+    },
+
+    async refreshToken() {
+        try {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (!refreshToken) throw new Error('Refresh token não encontrado');
+
+            const response = await api.post('/token/refresh/', {
+                refresh: refreshToken
+            });
+
+            const { access } = response.data;
+            localStorage.setItem('access_token', access);
+            return access;
+        } catch (error) {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            throw error;
+        }
     }
 }; 

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authService } from './authService';
 
 const api = axios.create({
     baseURL: 'http://localhost:8000/api',
@@ -25,6 +26,11 @@ api.interceptors.request.use(async (config) => {
             console.error('Erro ao obter token CSRF:', error);
         }
     }
+
+    // Adicione estas headers
+    config.headers['Accept'] = 'application/json';
+    config.headers['Content-Type'] = 'application/json';
+
     return config;
 });
 
@@ -39,14 +45,21 @@ api.interceptors.response.use(
         });
         return response;
     },
-    (error) => {
-        console.error('API Error:', {
-            url: error.config?.url,
-            method: error.config?.method,
-            status: error.response?.status,
-            data: error.response?.data,
-            headers: error.response?.headers,
-        });
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
+            try {
+                const newToken = await authService.refreshToken();
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return api(originalRequest);
+            } catch (refreshError) {
+                // Se o refresh falhar, redireciona para login
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
+        }
         return Promise.reject(error);
     }
 );

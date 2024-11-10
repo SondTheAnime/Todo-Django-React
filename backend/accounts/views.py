@@ -31,15 +31,20 @@ def login_view(request):
     user = authenticate(request, email=email, password=password)
 
     if user is not None:
-        login(request, user)
         refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        # Adiciona claims personalizados ao token
+        refresh["username"] = user.username
+        refresh["email"] = user.email
+
         logger.info(f"Login bem-sucedido para usuário: {email}")
         return Response(
             {
                 "detail": "Login realizado com sucesso",
                 "user": {"id": user.id, "username": user.username, "email": user.email},
                 "tokens": {
-                    "access": str(refresh.access_token),
+                    "access": access_token,
                     "refresh": str(refresh),
                 },
             }
@@ -61,7 +66,10 @@ def logout_view(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def get_csrf_token(request):
-    return JsonResponse({"csrfToken": get_token(request)})
+    token = get_token(request)
+    response = JsonResponse({"csrfToken": token})
+    response["X-CSRFToken"] = token
+    return response
 
 
 @api_view(["GET"])
