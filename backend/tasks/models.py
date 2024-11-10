@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from categories.models import Category
 
 # Create your models here.
 
@@ -30,6 +31,14 @@ class Task(models.Model):
     )
     priority = models.IntegerField("Prioridade", choices=PRIORITY_CHOICES, default=1)
     created_at = models.DateTimeField("Criado em", auto_now_add=True)
+    category = models.ForeignKey(
+        Category,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Categoria",
+        related_name="tasks",
+    )
 
     class Meta:
         verbose_name = "Tarefa"

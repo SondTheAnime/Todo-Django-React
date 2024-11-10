@@ -5,6 +5,13 @@ export interface Task {
     title: string;
     description: string;
     status: 'pending' | 'in_progress' | 'completed';
+    category: number | null;
+    category_details?: {
+        id: number;
+        name: string;
+        color: string;
+    };
+    priority: 1 | 2 | 3;
     created_at?: string;
 }
 

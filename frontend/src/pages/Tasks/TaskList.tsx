@@ -1,33 +1,53 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { taskService, Task } from '../../services/taskService';
-import { TrashIcon } from '@heroicons/react/24/outline';
+import { categoryService, Category } from '../../services/categoryService';
+import TaskCard from '../../components/TaskCard';
+import TaskEditModal from '../../components/TaskEditModal';
 
 export default function TaskList() {
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
+    const [editingTask, setEditingTask] = useState<Task | null>(null);
 
     useEffect(() => {
-        loadTasks();
+        loadData();
     }, []);
 
-    const loadTasks = async () => {
+    const loadData = async () => {
         try {
-            const data = await taskService.list();
-            const tasksArray = Array.isArray(data) ? data : [];
-            setTasks(tasksArray);
+            const [tasksData, categoriesData] = await Promise.all([
+                taskService.list(),
+                categoryService.list()
+            ]);
+            setTasks(Array.isArray(tasksData) ? tasksData : []);
+            setCategories(categoriesData);
         } catch (error) {
-            console.error('Erro ao carregar tarefas:', error);
+            console.error('Erro ao carregar dados:', error);
             setTasks([]);
         } finally {
             setLoading(false);
         }
     };
 
+    const handleEdit = (task: Task) => {
+        setEditingTask(task);
+    };
+
+    const handleSave = async (taskId: number, updatedTask: Partial<Task>) => {
+        try {
+            await taskService.update(taskId, updatedTask);
+            loadData();
+        } catch (error) {
+            console.error('Erro ao atualizar tarefa:', error);
+        }
+    };
+
     const handleStatusChange = async (taskId: number, newStatus: Task['status']) => {
         try {
             await taskService.update(taskId, { status: newStatus });
-            loadTasks();
+            loadData();
         } catch (error) {
             console.error('Erro ao atualizar status:', error);
         }
@@ -37,7 +57,7 @@ export default function TaskList() {
         if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
             try {
                 await taskService.delete(taskId);
-                loadTasks();
+                loadData();
             } catch (error) {
                 console.error('Erro ao excluir tarefa:', error);
             }
@@ -65,45 +85,26 @@ export default function TaskList() {
                 ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {tasks.map((task) => (
-                            <div key={task.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h3 className="font-semibold text-gray-900 dark:text-white">{task.title}</h3>
-                                        <p className="text-gray-600 dark:text-gray-300 mt-1">{task.description}</p>
-                                        <div className="mt-2 flex gap-2">
-                                            <select
-                                                value={task.status}
-                                                onChange={(e) => task.id && handleStatusChange(task.id, e.target.value as Task['status'])}
-                                                className="text-sm border rounded-lg px-2 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                                            >
-                                                <option value="pending">Pendente</option>
-                                                <option value="in_progress">Em Andamento</option>
-                                                <option value="completed">Concluída</option>
-                                            </select>
-                                            <span className={`inline-block px-2 py-1 rounded-lg text-sm ${task.status === 'completed'
-                                                ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
-                                                : task.status === 'in_progress'
-                                                    ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
-                                                    : 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
-                                                }`}>
-                                                {task.status === 'completed' ? 'Concluída' :
-                                                    task.status === 'in_progress' ? 'Em Andamento' :
-                                                        'Pendente'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => task.id && handleDelete(task.id)}
-                                        className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition-colors"
-                                    >
-                                        <TrashIcon className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            </div>
+                            <TaskCard
+                                key={task.id}
+                                task={task}
+                                onStatusChange={handleStatusChange}
+                                onDelete={handleDelete}
+                                onEdit={handleEdit}
+                            />
                         ))}
                     </div>
                 )}
             </div>
+
+            {editingTask && (
+                <TaskEditModal
+                    task={editingTask}
+                    categories={categories}
+                    onClose={() => setEditingTask(null)}
+                    onSave={handleSave}
+                />
+            )}
         </div>
     );
 } 

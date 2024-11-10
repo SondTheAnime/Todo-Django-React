@@ -1,11 +1,27 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
+import { categoryService, Category } from '../../services/categoryService';
 
 export default function TaskForm() {
     const navigate = useNavigate();
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
+    const [categoryId, setCategoryId] = useState<number | ''>('');
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    useEffect(() => {
+        loadCategories();
+    }, []);
+
+    const loadCategories = async () => {
+        try {
+            const data = await categoryService.list();
+            setCategories(data);
+        } catch (error) {
+            console.error('Erro ao carregar categorias:', error);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -13,7 +29,9 @@ export default function TaskForm() {
             await taskService.create({
                 title,
                 description,
-                status: 'pending'
+                status: 'pending',
+                category: categoryId ? Number(categoryId) : null,
+                priority: 1
             });
             navigate('/tasks');
         } catch (error) {
@@ -38,6 +56,23 @@ export default function TaskForm() {
                             placeholder="Digite o título da tarefa"
                             required
                         />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Categoria
+                        </label>
+                        <select
+                            className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            value={categoryId}
+                            onChange={(e) => setCategoryId(Number(e.target.value) || '')}
+                        >
+                            <option value="">Sem categoria</option>
+                            {categories.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                    {category.name}
+                                </option>
+                            ))}
+                        </select>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
