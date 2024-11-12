@@ -22,6 +22,8 @@ from tasks.views import TaskViewSet
 from categories.views import CategoryViewSet
 from accounts.views import login_view, logout_view, get_csrf_token
 from rest_framework_simplejwt.views import TokenRefreshView
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register(r"tasks", TaskViewSet, basename="task")
@@ -33,4 +35,4 @@ urlpatterns = [
     path("api/auth/", include("accounts.urls")),
     path("api/csrf/", get_csrf_token),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

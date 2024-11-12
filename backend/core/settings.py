@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from datetime import timedelta
 from pathlib import Path
 from decouple import config
+import os
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -58,7 +59,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "core.middleware.APILoggingMiddleware",
+    "core.middleware.RequestLoggingMiddleware",
 ]
 
 ROOT_URLCONF = "core.urls"
@@ -231,3 +232,9 @@ LOGGING = {
         },
     },
 }
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# Configurações para limitar tamanho dos arquivos
+MAX_UPLOAD_SIZE = 5242880  # 5MB em bytes

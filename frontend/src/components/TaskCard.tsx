@@ -1,14 +1,19 @@
-import { TrashIcon, PencilIcon, ExclamationCircleIcon, ExclamationTriangleIcon, MinusCircleIcon } from '@heroicons/react/24/outline';
-import type { Task } from '../services/taskService';
+import { TrashIcon, PencilIcon, ExclamationCircleIcon, ExclamationTriangleIcon, MinusCircleIcon, ClockIcon, DocumentIcon } from '@heroicons/react/24/outline';
+import type { Task, TaskStatus } from '../services/taskService';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useState } from 'react';
+import FilePreview from './FilePreview';
 
 interface TaskCardProps {
     task: Task;
-    onStatusChange: (taskId: number, newStatus: Task['status']) => void;
+    onStatusChange: (taskId: number, status: Task['status']) => void;
     onDelete: (taskId: number) => void;
     onEdit: (task: Task) => void;
+    onUpdateDueDate: (taskId: number, dueDate: string) => void;
 }
 
-export default function TaskCard({ task, onStatusChange, onDelete, onEdit }: TaskCardProps) {
+export default function TaskCard({ task, onStatusChange, onDelete, onEdit, onUpdateDueDate }: TaskCardProps) {
     const getPriorityInfo = (priority: number) => {
         switch (priority) {
             case 3:
@@ -41,6 +46,8 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit }: Tas
                 return 'bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-100 dark:border-green-700';
             case 'in_progress':
                 return 'bg-yellow-100 dark:bg-yellow-800 text-yellow-800 dark:text-yellow-100 dark:border-yellow-700';
+            case 'overdue':
+                return 'bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-100 dark:border-red-700';
             default:
                 return 'bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-100 dark:border-blue-700';
         }
@@ -59,12 +66,81 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit }: Tas
 
     const priorityInfo = getPriorityInfo(task.priority);
 
+    const handleEditClick = () => {
+        onEdit(task);
+    };
+
+    const isTaskOverdue = (task: Task) => {
+        if (!task.due_date || task.status === 'completed') return false;
+        return new Date(task.due_date) < new Date();
+    };
+
+    const handleDebugSetOverdue = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (task.id) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const isoDate = yesterday.toISOString();
+            console.log('Debug - Tarefa:', task.title);
+            console.log('Debug - ID:', task.id);
+            console.log('Debug - Nova data:', isoDate);
+            onUpdateDueDate(task.id, isoDate);
+        }
+    };
+
+    const [showPreview, setShowPreview] = useState(false);
+
+    const renderAttachment = (attachment: string) => {
+        const fileName = attachment.split('/').pop();
+        const cleanUrl = attachment.replace('http://localhost:8000', '');
+        const fullUrl = `http://localhost:8000${cleanUrl}`;
+        console.log('URL do anexo:', fullUrl);
+        return (
+            <div className="flex items-center gap-2">
+                <a
+                    href={fullUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                    <DocumentIcon className="h-4 w-4" />
+                    {fileName}
+                </a>
+                <button
+                    onClick={(e) => {
+                        e.preventDefault();
+                        setShowPreview(true);
+                    }}
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                >
+                    Pré-visualizar
+                </button>
+                {showPreview && (
+                    <FilePreview
+                        fileUrl={attachment}
+                        onClose={() => setShowPreview(false)}
+                    />
+                )}
+            </div>
+        );
+    };
+
+    const handleStatusChange = (newStatus: TaskStatus) => {
+        if (task.id) {
+            onStatusChange(task.id, newStatus);
+        }
+    };
+
     return (
-        <div className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+        <div className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isTaskOverdue(task) ? 'bg-red-50 dark:bg-red-900/10' : ''
+            }`}>
             <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                        <h3 className="font-semibold text-gray-900 dark:text-white">
+                        <h3 className={`font-semibold ${isTaskOverdue(task)
+                            ? 'text-red-600 dark:text-red-400'
+                            : 'text-gray-900 dark:text-white'
+                            }`}>
                             {task.title}
                         </h3>
                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm ${priorityInfo.bgColor} ${priorityInfo.color}`}>
@@ -72,11 +148,30 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit }: Tas
                             {priorityInfo.text}
                         </span>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 mb-3">
+                    <p className={`mb-3 ${isTaskOverdue(task)
+                        ? 'text-red-500 dark:text-red-400'
+                        : 'text-gray-600 dark:text-gray-300'
+                        }`}>
                         {task.description}
                     </p>
+                    {task.due_date && (
+                        <div className="flex items-center gap-2 text-sm">
+                            <ClockIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                            <span className={`${new Date(task.due_date) < new Date() && task.status !== 'completed'
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-gray-600 dark:text-gray-400'
+                                }`}>
+                                Vence em {format(new Date(task.due_date), "d 'de' MMMM 'às' HH:mm", { locale: ptBR })}
+                            </span>
+                        </div>
+                    )}
+                    {task.attachment && (
+                        <div className="mt-2">
+                            {renderAttachment(task.attachment as string)}
+                        </div>
+                    )}
                     <div className="flex items-center gap-4">
-                        {task.category_details && (
+                        {task.category_details && !isTaskOverdue(task) && (
                             <div className="flex items-center gap-2">
                                 <div
                                     className="w-3 h-3 rounded-full"
@@ -89,7 +184,12 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit }: Tas
                         )}
                         <select
                             value={task.status}
-                            onChange={(e) => task.id && onStatusChange(task.id, e.target.value as Task['status'])}
+                            onChange={(e) => {
+                                if (task.id) {
+                                    const newStatus = e.target.value as TaskStatus;
+                                    handleStatusChange(newStatus);
+                                }
+                            }}
                             className={`text-sm rounded-lg px-2 py-1 border ${getStatusColor(task.status)}`}
                         >
                             <option value="pending" className="bg-white dark:bg-gray-800">Pendente</option>
@@ -99,12 +199,24 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit }: Tas
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        onClick={() => onEdit(task)}
-                        className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                    >
-                        <PencilIcon className="h-5 w-5" />
-                    </button>
+                    {import.meta.env.DEV && (
+                        <button
+                            onClick={handleDebugSetOverdue}
+                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                        >
+                            Debug: Set Overdue
+                        </button>
+                    )}
+                    {!isTaskOverdue(task) ? (
+                        <>
+                            <button
+                                onClick={handleEditClick}
+                                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                            >
+                                <PencilIcon className="h-5 w-5" />
+                            </button>
+                        </>
+                    ) : null}
                     <button
                         onClick={() => task.id && onDelete(task.id)}
                         className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"

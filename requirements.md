@@ -27,14 +27,14 @@ Sistema web para gerenciamento de tarefas pessoais e profissionais, permitindo a
 - [ ] Logout
 
 ### 3.2 Gerenciamento de Tarefas
-- [ ] Criar nova tarefa
-- [ ] Editar tarefa existente
-- [ ] Excluir tarefa
-- [ ] Marcar tarefa como concluída
-- [ ] Definir prioridade (Baixa, Média, Alta)
-- [ ] Definir status (Pendente, Em Andamento, Concluída)
-- [ ] Adicionar descrição
-- [ ] Definir data de vencimento
+- [x] Criar nova tarefa
+- [x] Editar tarefa existente
+- [x] Excluir tarefa
+- [x] Marcar tarefa como concluída
+- [x] Definir prioridade (Baixa, Média, Alta)
+- [x] Definir status (Pendente, Em Andamento, Concluída)
+- [x] Adicionar descrição
+- [x] Definir data de vencimento
 - [ ] Adicionar anexos (opcional)
 
 ### 3.3 Categorização
