@@ -35,14 +35,14 @@ Sistema web para gerenciamento de tarefas pessoais e profissionais, permitindo a
 - [x] Definir status (Pendente, Em Andamento, Concluída)
 - [x] Adicionar descrição
 - [x] Definir data de vencimento
-- [ ] Adicionar anexos (opcional)
+- [x] Adicionar anexos (opcional)
 
 ### 3.3 Categorização
-- [ ] Criar categorias personalizadas
-- [ ] Editar categorias
-- [ ] Excluir categorias
-- [ ] Associar cores às categorias
-- [ ] Atribuir categoria às tarefas
+- [x] Criar categorias personalizadas
+- [x] Editar categorias
+- [x] Excluir categorias
+- [x] Associar cores às categorias
+- [x] Atribuir categoria às tarefas
 
 ### 3.4 Visualização e Filtros
 - [ ] Listagem de todas as tarefas

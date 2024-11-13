@@ -37,31 +37,31 @@ api.interceptors.request.use(async (config) => {
 });
 
 api.interceptors.response.use(
-    (response) => {
-        console.log('API Response:', {
-            url: response.config.url,
-            method: response.config.method,
-            status: response.status,
-            data: response.data,
-            headers: response.headers,
-        });
-        return response;
-    },
+    (response) => response,
     async (error) => {
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
+            
             try {
                 const newToken = await authService.refreshToken();
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return api(originalRequest);
             } catch (refreshError) {
-                // Se o refresh falhar, redireciona para login
-                window.location.href = '/login';
-                return Promise.reject(refreshError);
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                
+                window.dispatchEvent(new CustomEvent('auth:error'));
+                
+                return Promise.reject(error);
             }
         }
+
+        if (error.response?.status === 401) {
+            window.dispatchEvent(new CustomEvent('auth:error'));
+        }
+
         return Promise.reject(error);
     }
 );

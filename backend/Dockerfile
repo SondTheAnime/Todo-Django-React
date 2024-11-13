@@ -5,7 +5,6 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Instala netcat para verificar disponibilidade do banco de dados
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     netcat-traditional \
@@ -15,12 +14,9 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ .
-
-# Copia e dá permissão de execução ao script de entrada
-COPY backend/entrypoint.sh .
-RUN chmod +x entrypoint.sh
+COPY .docker/backend/entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 
-# Define o script como ponto de entrada
-ENTRYPOINT ["./entrypoint.sh"]
+CMD ["/app/entrypoint.sh"]

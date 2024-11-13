@@ -1,5 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { authService } from '../services/authService';
+import { useAuthStore } from '../hooks/useAuthStatus';
 
 interface LoginResponse {
     detail: string;
@@ -15,7 +16,6 @@ interface LoginResponse {
 }
 
 interface AuthContextType {
-    isAuthenticated: boolean;
     login: (email: string, password: string) => Promise<LoginResponse>;
     logout: () => Promise<void>;
 }
@@ -23,25 +23,26 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const { setAuthenticated, setShowLoginModal } = useAuthStore();
 
     useEffect(() => {
-        const token = localStorage.getItem('access_token');
-        if (token) {
-            setIsAuthenticated(true);
-        } else {
-            login('joaovictorbrtor2@gmail.com', 'admin123');
-        }
+        const handleAuthError = () => {
+            setAuthenticated(false);
+            setShowLoginModal(true);
+        };
+
+        window.addEventListener('auth:error', handleAuthError);
+        return () => window.removeEventListener('auth:error', handleAuthError);
     }, []);
 
     const login = async (email: string, password: string): Promise<LoginResponse> => {
         try {
             const response = await authService.login(email, password);
-            setIsAuthenticated(true);
+            setAuthenticated(true);
+            setShowLoginModal(false);
             return response;
         } catch (error) {
-            console.error('Erro no login:', error);
-            setIsAuthenticated(false);
+            setAuthenticated(false);
             throw error;
         }
     };
@@ -49,14 +50,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const logout = async (): Promise<void> => {
         try {
             await authService.logout();
-            setIsAuthenticated(false);
+            setAuthenticated(false);
         } catch (error) {
             console.error('Erro no logout:', error);
         }
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+        <AuthContext.Provider value={{ login, logout }}>
             {children}
         </AuthContext.Provider>
     );

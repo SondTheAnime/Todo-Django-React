@@ -29,8 +29,10 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    env_file:
+      - .env
     environment:
-      - DB_NAME=taskdb
+      - DB_NAME=task_manager
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_HOST=db
@@ -41,7 +43,7 @@ services:
       - DJANGO_SUPERUSER_USERNAME=Sond
       - DJANGO_SUPERUSER_EMAIL=joaovictorbrtor2@gmail.com
       - DJANGO_SUPERUSER_PASSWORD=admin123
-    command: [ "/app/.docker/backend/wait-for-it.sh" ]
+    command: sh -c "chmod +x /app/.docker/backend/entrypoint.sh && /app/.docker/backend/entrypoint.sh"
 
   frontend:
     container_name: task_frontend
