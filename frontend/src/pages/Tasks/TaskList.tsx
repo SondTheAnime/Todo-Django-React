@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { taskService, Task, TaskStatus } from '../../services/taskService';
-import { categoryService, Category } from '../../services/categoryService';
 import TaskCard from '../../components/TaskCard';
+import TaskFilters from '../../components/TaskFilters';
+import { taskService } from '../../services/taskService';
+import { categoryService } from '../../services/categoryService';
+import { Task } from '../../types/Task';
+import { Category } from '../../types/Category';
 import TaskEditModal from '../../components/TaskEditModal';
 
 export default function TaskList() {
@@ -10,33 +13,58 @@ export default function TaskList() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
-    const [overdueTasksCount, setOverdueTasksCount] = useState(0);
+    const [filters, setFilters] = useState({
+        status: '',
+        priority: '',
+        category: '',
+        search: '',
+        ordering: '-created_at'
+    });
 
     useEffect(() => {
         loadData();
-    }, []);
-
-    useEffect(() => {
-        const overdueTasks = tasks.filter(task => {
-            if (!task.due_date || task.status === 'completed') return false;
-            return new Date(task.due_date) < new Date();
-        });
-        setOverdueTasksCount(overdueTasks.length);
-    }, [tasks]);
+    }, [filters]);
 
     const loadData = async () => {
         try {
-            const [tasksData, categoriesData] = await Promise.all([
-                taskService.list(),
+            setLoading(true);
+            const [tasksResponse, categoriesData] = await Promise.all([
+                taskService.list(filters),
                 categoryService.list()
             ]);
-            setTasks(Array.isArray(tasksData) ? tasksData : []);
+            
+            setTasks(tasksResponse.results);
             setCategories(categoriesData);
         } catch (error) {
             console.error('Erro ao carregar dados:', error);
             setTasks([]);
+            setCategories([]);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleFilterChange = (newFilters: any) => {
+        setFilters(newFilters);
+    };
+
+    const handleStatusChange = async (taskId: number, newStatus: string) => {
+        try {
+            await taskService.updateStatus(taskId, newStatus);
+            loadData();
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+        }
+    };
+
+    const handleDelete = async (taskId: number) => {
+        if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
+            try {
+                await taskService.delete(taskId);
+                setTasks(tasks.filter(task => task.id !== taskId));
+            } catch (error) {
+                console.error('Erro ao excluir tarefa:', error);
+            }
         }
     };
 
@@ -44,7 +72,7 @@ export default function TaskList() {
         setEditingTask(task);
     };
 
-    const handleSave = async (taskId: number, updatedTask: Partial<Task> | FormData) => {
+    const handleSaveEdit = async (taskId: number, updatedTask: FormData) => {
         try {
             await taskService.update(taskId, updatedTask);
             loadData();
@@ -54,95 +82,39 @@ export default function TaskList() {
         }
     };
 
-    const handleStatusChange = async (taskId: number, newStatus: TaskStatus) => {
+    const handleUpdateDueDate = async (taskId: number, newDate: string) => {
         try {
-            const taskToUpdate = tasks.find(t => t.id === taskId);
-            if (!taskToUpdate) return;
-
-            const updatedTask = {
-                title: taskToUpdate.title,
-                description: taskToUpdate.description,
-                status: newStatus,
-                priority: taskToUpdate.priority,
-                category: taskToUpdate.category,
-                due_date: taskToUpdate.due_date
-            };
-
-            await taskService.update(taskId, updatedTask);
-            await loadData();
+            await taskService.updateDueDate(taskId, new Date(newDate));
+            loadData();
         } catch (error) {
-            console.error('Erro ao atualizar status:', error);
-            alert('Erro ao atualizar o status da tarefa');
-        }
-    };
-
-    const handleDelete = async (taskId: number) => {
-        if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
-            try {
-                await taskService.delete(taskId);
-                loadData();
-            } catch (error) {
-                console.error('Erro ao excluir tarefa:', error);
-            }
-        }
-    };
-
-    const handleUpdateDueDate = async (taskId: number, dueDate: string) => {
-        try {
-            const taskToUpdate = tasks.find(t => t.id === taskId);
-            console.log('Debug - Atualizando data de vencimento');
-            console.log('Debug - Tarefa encontrada:', taskToUpdate);
-            console.log('Debug - Nova data:', dueDate);
-
-            if (!taskToUpdate) {
-                console.log('Debug - Tarefa não encontrada!');
-                return;
-            }
-
-            const updatedTask = {
-                title: taskToUpdate.title,
-                description: taskToUpdate.description,
-                status: taskToUpdate.status,
-                priority: taskToUpdate.priority,
-                category: taskToUpdate.category,
-                due_date: dueDate
-            };
-
-            console.log('Debug - Dados para atualização:', updatedTask);
-            await taskService.update(taskId, updatedTask);
-            console.log('Debug - Atualização concluída com sucesso');
-            await loadData();
-        } catch (error) {
-            console.error('Debug - Erro ao atualizar data de vencimento:', error);
-            alert('Erro ao atualizar a data de vencimento da tarefa');
+            console.error('Erro ao atualizar data de vencimento:', error);
         }
     };
 
     return (
-        <div className="container mx-auto">
+        <div className="container mx-auto p-4">
             <div className="flex justify-between items-center mb-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Tarefas</h1>
-                    {overdueTasksCount > 0 && (
-                        <p className="text-red-600 dark:text-red-400 mt-2">
-                            {overdueTasksCount} {overdueTasksCount === 1 ? 'tarefa vencida' : 'tarefas vencidas'}
-                        </p>
-                    )}
-                </div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    Tarefas
+                </h1>
                 <Link
                     to="/tasks/new"
-                    className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg"
                 >
                     Nova Tarefa
                 </Link>
             </div>
+
+            <TaskFilters
+                onFilterChange={handleFilterChange}
+                categories={categories}
+            />
+
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg">
                 {loading ? (
-                    <div className="p-4 text-gray-600 dark:text-gray-300">Carregando...</div>
+                    <div className="p-4">Carregando...</div>
                 ) : tasks.length === 0 ? (
-                    <div className="p-4">
-                        <p className="text-gray-500 dark:text-gray-400">Nenhuma tarefa encontrada.</p>
-                    </div>
+                    <div className="p-4">Nenhuma tarefa encontrada.</div>
                 ) : (
                     <div className="divide-y divide-gray-200 dark:divide-gray-700">
                         {tasks.map((task) => (
@@ -164,7 +136,7 @@ export default function TaskList() {
                     task={editingTask}
                     categories={categories}
                     onClose={() => setEditingTask(null)}
-                    onSave={handleSave}
+                    onSave={handleSaveEdit}
                 />
             )}
         </div>

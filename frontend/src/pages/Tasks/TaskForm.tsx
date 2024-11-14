@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { taskService } from '../../services/taskService';
-import { categoryService, Category } from '../../services/categoryService';
+import { categoryService } from '../../services/categoryService';
 import FileUpload from '../../components/FileUpload';
+import { Category } from '../../types/Category';
 
 type TaskStatus = 'pending' | 'in_progress' | 'completed';
 type TaskPriority = 1 | 2 | 3;
@@ -55,29 +56,44 @@ export default function TaskForm() {
         }
     };
 
-    const validatePriority = (value: number): TaskPriority => {
-        if (value >= 1 && value <= 3) {
-            return value as TaskPriority;
-        }
-        return 1;
-    };
+    // const validatePriority = (value: number): TaskPriority => {
+    //     if (value >= 1 && value <= 3) {
+    //         return value as TaskPriority;
+    //     }
+    //     return 1;
+    // };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            await taskService.create({
-                title: formData.title,
-                description: formData.description,
-                status: formData.status,
-                category: formData.category ? Number(formData.category) : null,
-                priority: validatePriority(formData.priority),
-                due_date: formData.due_date,
-                is_overdue: false,
-                ...(formData.attachment && { attachment: formData.attachment })
-            });
+            const formDataToSend = new FormData();
+
+            // Adiciona os campos básicos
+            formDataToSend.append('title', formData.title);
+            formDataToSend.append('description', formData.description);
+            formDataToSend.append('status', formData.status);
+            formDataToSend.append('priority', String(formData.priority));
+            
+            // Adiciona categoria apenas se existir
+            if (formData.category) {
+                formDataToSend.append('category', String(formData.category));
+            }
+
+            // Adiciona data de vencimento apenas se existir
+            if (formData.due_date) {
+                formDataToSend.append('due_date', new Date(formData.due_date).toISOString());
+            }
+
+            // Adiciona anexo apenas se existir
+            if (formData.attachment) {
+                formDataToSend.append('attachment', formData.attachment);
+            }
+
+            await taskService.create(formDataToSend);
             navigate('/tasks');
         } catch (error) {
             console.error('Erro ao criar tarefa:', error);
+            alert('Erro ao criar tarefa. Por favor, tente novamente.');
         }
     };
 

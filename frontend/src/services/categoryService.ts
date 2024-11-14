@@ -1,12 +1,5 @@
 import api from './api';
-
-export interface Category {
-    id?: number;
-    name: string;
-    color: string;
-    created_at?: string;
-}
-
+import { Category } from '../types/Category';
 interface PaginatedResponse<T> {
     count: number;
     next: string | null;

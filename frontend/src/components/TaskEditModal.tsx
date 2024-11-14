@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import type { Task } from '../services/taskService';
-import type { Category } from '../services/categoryService';
+import type { Task } from '../types/Task';
+import type { Category } from '../types/Category';
 import FileUpload from './FileUpload';
+import FilePreview from './FilePreview';
+import { DocumentIcon } from '@heroicons/react/24/outline';
 
 interface TaskEditModalProps {
     task: Task;
     categories: Category[];
     onClose: () => void;
-    onSave: (taskId: number, updatedTask: Partial<Task> | FormData) => Promise<void>;
+    onSave: (taskId: number, updatedTask: FormData) => Promise<void>;
 }
 
 export default function TaskEditModal({ task, categories, onClose, onSave }: TaskEditModalProps) {
@@ -20,6 +22,7 @@ export default function TaskEditModal({ task, categories, onClose, onSave }: Tas
         due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '',
         attachment: task.attachment || null
     });
+    const [showPreview, setShowPreview] = useState(false);
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -47,20 +50,18 @@ export default function TaskEditModal({ task, categories, onClose, onSave }: Tas
         e.preventDefault();
         if (task.id) {
             const formDataToSend = new FormData();
-
+            
             Object.entries(formData).forEach(([key, value]) => {
-                if (value !== null && value !== undefined && key !== 'attachment') {
-                    if (key === 'due_date') {
-                        formDataToSend.append(key, value ? new Date(value as string).toISOString() : '');
+                if (value !== null && value !== undefined) {
+                    if (key === 'due_date' && value) {
+                        formDataToSend.append(key, new Date(value as string).toISOString());
+                    } else if (key === 'attachment' && value instanceof File) {
+                        formDataToSend.append(key, value);
                     } else {
                         formDataToSend.append(key, String(value));
                     }
                 }
             });
-
-            if (formData.attachment instanceof File) {
-                formDataToSend.append('attachment', formData.attachment);
-            }
 
             await onSave(task.id, formDataToSend);
             onClose();
@@ -82,9 +83,35 @@ export default function TaskEditModal({ task, categories, onClose, onSave }: Tas
     const renderCurrentAttachment = () => {
         if (typeof task.attachment === 'string' && task.attachment) {
             const fileName = task.attachment.split('/').pop();
+            const cleanUrl = task.attachment.replace('http://localhost:8000', '');
+            const fullUrl = `http://localhost:8000${cleanUrl}`;
+            
             return (
-                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Anexo atual: <a href={`http://localhost:8000${task.attachment}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 dark:text-blue-400 hover:underline">{fileName}</a>
+                <div className="text-sm text-gray-600 dark:text-gray-400 mb-2 flex items-center gap-2">
+                    <a 
+                        href={fullUrl}
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                        <DocumentIcon className="h-4 w-4" />
+                        {fileName}
+                    </a>
+                    <button
+                        onClick={(e) => {
+                            e.preventDefault();
+                            setShowPreview(true);
+                        }}
+                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                    >
+                        Pré-visualizar
+                    </button>
+                    {showPreview && (
+                        <FilePreview
+                            fileUrl={task.attachment}
+                            onClose={() => setShowPreview(false)}
+                        />
+                    )}
                 </div>
             );
         }

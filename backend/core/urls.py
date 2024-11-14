@@ -32,6 +32,7 @@ router.register(r"categories", CategoryViewSet, basename="category")
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
+    path("api/", include("tasks.urls")),
     path("api/auth/", include("accounts.urls")),
     path("api/csrf/", get_csrf_token),
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

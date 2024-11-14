@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { categoryService } from '../../services/categoryService';
 import { taskService } from '../../services/taskService';
-import type { Category } from '../../services/categoryService';
-import type { Task } from '../../services/taskService';
+import type { Category } from '../../types/Category';
+import type { Task } from '../../types/Task';
 import CategoryCard from '../../components/CategoryCard';
 
 export default function CategoryList() {
@@ -23,12 +23,20 @@ export default function CategoryList() {
 
   const loadData = async () => {
     try {
+      const defaultFilters = {
+        status: '',
+        priority: '',
+        category: '',
+        search: '',
+        ordering: '-created_at'
+      };
+
       const [categoriesData, tasksData] = await Promise.all([
         categoryService.list(),
-        taskService.list()
+        taskService.list(defaultFilters)
       ]);
       setCategories(categoriesData);
-      setTasks(tasksData);
+      setTasks(tasksData.results);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {

@@ -1,5 +1,5 @@
 import { TrashIcon, PencilIcon, ExclamationCircleIcon, ExclamationTriangleIcon, MinusCircleIcon, ClockIcon, DocumentIcon } from '@heroicons/react/24/outline';
-import type { Task, TaskStatus } from '../services/taskService';
+import type { Task, TaskStatus } from '../types/Task';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
@@ -75,6 +75,8 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit, onUpd
         return new Date(task.due_date) < new Date();
     };
 
+    const isOverdue = isTaskOverdue(task);
+
     const handleDebugSetOverdue = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (task.id) {
@@ -125,15 +127,8 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit, onUpd
         );
     };
 
-    const handleStatusChange = (newStatus: TaskStatus) => {
-        if (task.id) {
-            onStatusChange(task.id, newStatus);
-        }
-    };
-
     return (
-        <div className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isTaskOverdue(task) ? 'bg-red-50 dark:bg-red-900/10' : ''
-            }`}>
+        <div className={`p-4 ${isOverdue ? 'bg-red-50 dark:bg-red-900/10' : ''}`}>
             <div className="flex justify-between items-start gap-4">
                 <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -171,7 +166,7 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit, onUpd
                         </div>
                     )}
                     <div className="flex items-center gap-4">
-                        {task.category_details && !isTaskOverdue(task) && (
+                        {task.category_details && (
                             <div className="flex items-center gap-2">
                                 <div
                                     className="w-3 h-3 rounded-full"
@@ -182,20 +177,26 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit, onUpd
                                 </span>
                             </div>
                         )}
-                        <select
-                            value={task.status}
-                            onChange={(e) => {
-                                if (task.id) {
-                                    const newStatus = e.target.value as TaskStatus;
-                                    handleStatusChange(newStatus);
-                                }
-                            }}
-                            className={`text-sm rounded-lg px-2 py-1 border ${getStatusColor(task.status)}`}
-                        >
-                            <option value="pending" className="bg-white dark:bg-gray-800">Pendente</option>
-                            <option value="in_progress" className="bg-white dark:bg-gray-800">Em Andamento</option>
-                            <option value="completed" className="bg-white dark:bg-gray-800">Concluída</option>
-                        </select>
+                        {isOverdue ? (
+                            <div className="text-sm px-2 py-1 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200">
+                                Tarefa Vencida
+                            </div>
+                        ) : (
+                            <select
+                                value={task.status}
+                                onChange={(e) => {
+                                    if (task.id) {
+                                        const newStatus = e.target.value as TaskStatus;
+                                        onStatusChange(task.id, newStatus);
+                                    }
+                                }}
+                                className={`text-sm rounded-lg px-2 py-1 border ${getStatusColor(task.status)}`}
+                            >
+                                <option value="pending" className="bg-white dark:bg-gray-800">Pendente</option>
+                                <option value="in_progress" className="bg-white dark:bg-gray-800">Em Andamento</option>
+                                <option value="completed" className="bg-white dark:bg-gray-800">Concluída</option>
+                            </select>
+                        )}
                     </div>
                 </div>
                 <div className="flex gap-2">
@@ -207,16 +208,14 @@ export default function TaskCard({ task, onStatusChange, onDelete, onEdit, onUpd
                             Debug: Set Overdue
                         </button>
                     )}
-                    {!isTaskOverdue(task) ? (
-                        <>
-                            <button
-                                onClick={handleEditClick}
-                                className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                            >
-                                <PencilIcon className="h-5 w-5" />
-                            </button>
-                        </>
-                    ) : null}
+                    {!isOverdue && (
+                        <button
+                            onClick={handleEditClick}
+                            className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                        >
+                            <PencilIcon className="h-5 w-5" />
+                        </button>
+                    )}
                     <button
                         onClick={() => task.id && onDelete(task.id)}
                         className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"

@@ -45,21 +45,21 @@ Sistema web para gerenciamento de tarefas pessoais e profissionais, permitindo a
 - [x] Atribuir categoria às tarefas
 
 ### 3.4 Visualização e Filtros
-- [ ] Listagem de todas as tarefas
-- [ ] Filtrar por status
-- [ ] Filtrar por prioridade
-- [ ] Filtrar por categoria
-- [ ] Busca por texto
-- [ ] Ordenar por data de criação
-- [ ] Ordenar por data de vencimento
-- [ ] Ordenar por prioridade
+- [x] Listagem de todas as tarefas
+- [x] Filtrar por status
+- [x] Filtrar por prioridade
+- [x] Filtrar por categoria
+- [x] Busca por texto
+- [x] Ordenar por data de criação
+- [x] Ordenar por data de vencimento
+- [x] Ordenar por prioridade
 
 ### 3.5 Dashboard
-- [ ] Visão geral das tarefas pendentes
-- [ ] Tarefas atrasadas
-- [ ] Tarefas concluídas
-- [ ] Gráfico de distribuição por status
-- [ ] Gráfico de distribuição por categoria
+- [x] Visão geral das tarefas pendentes
+- [x] Tarefas atrasadas
+- [x] Tarefas concluídas
+- [x] Gráfico de distribuição por status
+- [x] Gráfico de distribuição por categoria
 
 ## 4. Requisitos Não Funcionais
 
