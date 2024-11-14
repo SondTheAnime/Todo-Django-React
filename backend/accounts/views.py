@@ -1,4 +1,4 @@
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, get_user_model
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
 from rest_framework.decorators import api_view, permission_classes
@@ -7,6 +7,9 @@ from rest_framework.response import Response
 from rest_framework import status
 import logging
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 logger = logging.getLogger(__name__)
 
@@ -85,3 +88,82 @@ def check_auth(request):
             },
         }
     )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def register_view(request):
+    username = request.data.get("username")
+    email = request.data.get("email")
+    password = request.data.get("password")
+
+    if not all([username, email, password]):
+        return Response(
+            {"detail": "Todos os campos são obrigatórios"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        User = get_user_model()
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"detail": "Este email já está em uso"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password
+        )
+
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+
+        logger.info(f"Novo usuário registrado: {email}")
+        return Response(
+            {
+                "detail": "Conta criada com sucesso",
+                "user": {"id": user.id, "username": user.username, "email": user.email},
+                "tokens": {
+                    "access": access_token,
+                    "refresh": str(refresh),
+                },
+            }
+        )
+    except Exception as e:
+        logger.error(f"Erro ao registrar usuário: {str(e)}")
+        return Response(
+            {"detail": "Erro ao criar conta"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def reset_password_request(request):
+    email = request.data.get("email")
+    
+    if not email:
+        return Response(
+            {"detail": "Email é obrigatório"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        
+    User = get_user_model()
+    try:
+        user = User.objects.get(email=email)
+        # Gerar token único
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        
+        # Aqui você implementaria o envio do email com o link de reset
+        # Por enquanto, apenas retornamos sucesso
+        logger.info(f"Solicitação de reset de senha para: {email}")
+        return Response({"detail": "Instruções enviadas para seu email"})
+        
+    except User.DoesNotExist:
+        return Response(
+            {"detail": "Email não encontrado"},
+            status=status.HTTP_404_NOT_FOUND
+        )

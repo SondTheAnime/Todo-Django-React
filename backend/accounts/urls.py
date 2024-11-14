@@ -6,4 +6,5 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout"),
     path("check/", views.check_auth, name="check_auth"),
     path("csrf/", views.get_csrf_token, name="get_csrf_token"),
+    path("register/", views.register_view, name="register"),
 ]

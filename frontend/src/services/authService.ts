@@ -13,6 +13,12 @@ interface LoginResponse {
     };
 }
 
+interface RegisterData {
+    username: string;
+    email: string;
+    password: string;
+}
+
 export const authService = {
     async login(email: string, password: string) {
         const response = await api.post<LoginResponse>('/auth/login/', {
@@ -60,5 +66,16 @@ export const authService = {
             localStorage.removeItem('refresh_token');
             throw error;
         }
+    },
+
+    async register(data: RegisterData) {
+        const response = await api.post<LoginResponse>('/auth/register/', data);
+        
+        if (response.data.tokens) {
+            localStorage.setItem('access_token', response.data.tokens.access);
+            localStorage.setItem('refresh_token', response.data.tokens.refresh);
+        }
+        
+        return response.data;
     }
 }; 
