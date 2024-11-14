@@ -46,7 +46,8 @@ export default function CategoryList() {
 
   const getTasksByCategory = (categoryId: number) => {
     return tasks.filter(task => {
-      return task.category === categoryId || task.category_details?.id === categoryId;
+      const belongsToCategory = task.category === categoryId || task.category_details?.id === categoryId;
+      return belongsToCategory;
     });
   };
 

@@ -19,7 +19,7 @@ export default function TaskEditModal({ task, categories, onClose, onSave }: Tas
         status: task.status,
         category: task.category,
         priority: task.priority,
-        due_date: task.due_date ? new Date(task.due_date).toISOString().slice(0, 16) : '',
+        due_date: task.due_date ? new Date(task.due_date).toLocaleString('sv-SE').slice(0, 16) : '',
         attachment: task.attachment || null
     });
     const [showPreview, setShowPreview] = useState(false);

@@ -1,7 +1,8 @@
 import { PencilIcon, TrashIcon, ExclamationCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { Link } from 'react-router-dom';
-import type { Category } from '../services/categoryService';
-import type { Task } from '../services/taskService';
+import type { Category } from '../types/Category';
+import type { Task } from '../types/Task';
+import { useState } from 'react';
+import TaskViewModal from './TaskViewModal';
 
 interface CategoryCardProps {
     category: Category;
@@ -11,6 +12,8 @@ interface CategoryCardProps {
 }
 
 export default function CategoryCard({ category, tasks, onEdit, onDelete }: CategoryCardProps) {
+    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'completed':
@@ -31,6 +34,31 @@ export default function CategoryCard({ category, tasks, onEdit, onDelete }: Cate
             default:
                 return 'Pendente';
         }
+    };
+
+    const isTaskOverdue = (task: Task) => {
+        if (!task.due_date || task.status === 'completed') return false;
+        return new Date(task.due_date) < new Date();
+    };
+
+    const renderTaskStatus = (task: Task) => {
+        if (isTaskOverdue(task)) {
+            return (
+                <span className="px-2 py-1 text-xs rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+                    Vencida
+                </span>
+            );
+        }
+        return (
+            <span className={`px-2 py-1 text-xs rounded-lg ${getStatusColor(task.status)}`}>
+                {getStatusText(task.status)}
+            </span>
+        );
+    };
+
+    const handleTaskClick = (e: React.MouseEvent, task: Task) => {
+        e.preventDefault();
+        setSelectedTask(task);
     };
 
     return (
@@ -75,15 +103,15 @@ export default function CategoryCard({ category, tasks, onEdit, onDelete }: Cate
                 ) : (
                     <div className="space-y-3">
                         {tasks.map(task => (
-                            <Link
-                                to={`/tasks/${task.id}`}
+                            <div
+                                onClick={(e) => handleTaskClick(e, task)}
                                 key={task.id}
-                                className="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                className="block p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                             >
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h4 className="font-medium text-gray-900 dark:text-white">
+                                            <h4 className={`font-medium ${isTaskOverdue(task) ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
                                                 {task.title}
                                             </h4>
                                             {task.priority === 3 && (
@@ -94,20 +122,24 @@ export default function CategoryCard({ category, tasks, onEdit, onDelete }: Cate
                                             )}
                                         </div>
                                         {task.description && (
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                                            <p className={`text-sm mt-1 line-clamp-2 ${isTaskOverdue(task) ? 'text-red-500 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
                                                 {task.description}
                                             </p>
                                         )}
                                     </div>
-                                    <span className={`px-2 py-1 text-xs rounded-lg ${getStatusColor(task.status)}`}>
-                                        {getStatusText(task.status)}
-                                    </span>
+                                    {renderTaskStatus(task)}
                                 </div>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 )}
             </div>
+            {selectedTask && (
+                <TaskViewModal
+                    task={selectedTask}
+                    onClose={() => setSelectedTask(null)}
+                />
+            )}
         </div>
     );
 } 
